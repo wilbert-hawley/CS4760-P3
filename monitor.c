@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <errno.h>
 #include <stdbool.h>
+#include "libmonitor.h"
 void help_message() {
   printf("\nHelp Message - fill in later\n");
   exit(0);
@@ -23,7 +24,7 @@ void error_halt(char* title) {
 }
 
 int main(int argc, char** argv) {
-
+  fun();
   char* logfile_name = "logfile";
   int producer_num = 2,
       consumer_num = 6,
