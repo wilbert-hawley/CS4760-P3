@@ -11,6 +11,7 @@
 #include <stdbool.h>
 void help_message() {
   printf("\nHelp Message - fill in later\n");
+  exit(0);
 }
 
 void error_halt(char* title) {
@@ -23,9 +24,15 @@ void error_halt(char* title) {
 
 int main(int argc, char** argv) {
 
+  char* logfile_name = "logfile";
+  int producer_num = 2,
+      consumer_num = 6,
+      time_end = 100;
+  bool logfile_flag = false;     
+
   printf("\n\nParsing Begins\n\n");
   
-  
+   
 
   char options;
   while (true) {
@@ -36,27 +43,36 @@ int main(int argc, char** argv) {
 
     switch(options) {
       case 'h':
-        help_message();
-        exit(0);
-        break;
+        help_message();  
       case 'o':
 	printf("\nOption -%c: %s\n", options, optarg);
+        logfile_name = strdup(optarg);
+        logfile_flag = true;
         break;
       case 'p':
         printf("\nOption -%c: %s\n", options, optarg); 
+        producer_num = atoi(optarg);
         break;
       case 'c':
         printf("\nOption -%c: %s\n", options, optarg);
+        consumer_num = atoi(optarg);
         break;  
       case 't':
         printf("\nOption -%c: %s\n", options, optarg);
-        break;
+        time_end = atoi(optarg);
+      break;
       default:
          error_halt(argv[0]);
      }
   }
  
   printf("\n\nParsing Commences\n\n");
-
+  printf("\nName of logfile = %s", logfile_name);
+  printf("\nNumber of producers = %d", producer_num);
+  printf("\nNumber of consumers = %d", consumer_num);
+  printf("\nTime until termination = %d\n\n", time_end);
+  
+  if(logfile_flag)
+    free(logfile_name);
   return EXIT_SUCCESS;
 }
