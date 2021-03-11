@@ -75,5 +75,9 @@ int main(int argc, char** argv) {
   
   if(logfile_flag)
     free(logfile_name);
+  
+  system("./producer");
+  system("./consumer"); 
+  
   return EXIT_SUCCESS;
 }

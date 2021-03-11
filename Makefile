@@ -1,32 +1,34 @@
 CC = gcc
-OLFAGS = -Wall -g
+CLFAGS = -Wall -g
 MONITOR = monitor
 MONITOR_C = monitor.c
 MONITOR_O = monitor.o
 LIBMONITOR = libmonitor.a
 LIB_H = libmonitor.h
-LIB_C = libmonitor.h
+LIB_C = libmonitor.c
 LIB_O = libmonitor.o
 
-all: $(MONITOR)
+.SUFFIXES: .c .o
+
+all: $(MONITOR) producer consumer $(LIBMONITOR)
 
 $(MONITOR): $(MONITOR_O) $(LIBMONITOR)
-	$(CC) -lm -o $(MONITOR) $(MONITOR_O) -L. 
+	$(CC) -lm -o $@ $(MONITOR_O) -L . -lmonitor 
 
-$(MONITOR_O): $(MONITOR_C) 
-	$(CC) $(OFLAGS) -c $(MONITOR_C) -o $(MONITOR_O)
+producer: producer.o
+	$(CC) -o $@ producer.o
 
-$(LIB_O): $(LIB_C) $(LIB_H)
-	$(CC) $(OFLAGS) -c $(LIB_C) -o $(LIB_O)
+consumer: consumer.o
+	$(CC) -o $@ consumer.o
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
 
 $(LIBMONITOR): $(LIB_O)
-	ar rcs $(LIBMONITOR) $(LIB_O)
+	ar rc $(LIBMONITOR) $(LIB_O)
 
 libs: $(LIBMONITOR)
 
-# %.o: %.c 
-# #        $(CC) $(OFLAGS) -c $*.c -o $*.o
-
 .PHONY: clean
 clean:
-	/bin/rm -f $(MONITOR) *.o *.a
+	/bin/rm -f $(MONITOR) producer consumer  *.o *.a logfile
