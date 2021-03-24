@@ -13,7 +13,7 @@ LIB_O = libmonitor.o
 all: $(MONITOR) producer consumer $(LIBMONITOR)
 
 $(MONITOR): $(MONITOR_O) $(LIBMONITOR)
-	$(CC) -lm -o $@ $(MONITOR_O) -L . -lmonitor 
+	$(CC) -lm -o $@ $(MONITOR_O) -L . -lmonitor -lpthread -lrt 
 
 producer: producer.o $(LIBMONITOR)
 	$(CC) -lm -o $@ producer.o -L . -lmonitor
