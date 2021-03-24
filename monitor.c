@@ -10,6 +10,12 @@
 #include <errno.h>
 #include <stdbool.h>
 #include "libmonitor.h"
+#include <sys/ipc.h> 
+#include <sys/shm.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 void help_message() {
   printf("\nHelp Message - fill in later\n");
   exit(0);
@@ -23,17 +29,15 @@ void error_halt(char* title) {
     exit(-1);
 }
 
+int shmid;
+int* shmp;
+
 int main(int argc, char** argv) {
   fun();
-  char* logfile_name = "logfile";
   int producer_num = 2,
       consumer_num = 6,
       time_end = 100;
-  bool logfile_flag = false;     
-
-  printf("\n\nParsing Begins\n\n");
-  
-   
+  bool logfile_flag = false;
 
   char options;
   while (true) {
@@ -67,17 +71,54 @@ int main(int argc, char** argv) {
      }
   }
  
-  printf("\n\nParsing Commences\n\n");
+ printf("\n\nParsing Commences\n\n");
   printf("\nName of logfile = %s", logfile_name);
   printf("\nNumber of producers = %d", producer_num);
   printf("\nNumber of consumers = %d", consumer_num);
-  printf("\nTime until termination = %d\n\n", time_end);
+  printf("\nTime until termination = %d\n\n", time_end); 
+
+  key_t sharedMemoryKey;
+  if ((sharedMemoryKey = ftok("./monitor.c", 0)) == ((key_t) - 1))
+  {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("Error: Failed to derive key from a.c\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if ((shmid = shmget(sharedMemoryKey, sizeof(int), IPC_CREAT | 0600)) == -1)
+  {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("Error: Failed to create semaphore with key\n");
+    exit(EXIT_FAILURE);
+  }
+
+  shmp = (int *)shmat(shmid, NULL, 0);
+
+  *shmp = 5; 
+
+  int child;
+
+  child = fork();
+
+  if(child == 0) {
+    execl("./producer", "./producer", NULL);
+    
+  }
+
+  child = fork();
+  if(child == 0) {
+    execl("./consumer", "./consumer", NULL);
+  }
+
+  int status;
+   while ((child = wait(&status)) > 0);
+
+  printf("\nAfter calling both children, shmp = %d", *shmp);
   
+  shmdt(shmp);
+
+  shmctl(shmid, IPC_RMID, NULL);
   if(logfile_flag)
     free(logfile_name);
-  
-  system("./producer");
-  system("./consumer"); 
-  
   return EXIT_SUCCESS;
 }

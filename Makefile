@@ -15,11 +15,11 @@ all: $(MONITOR) producer consumer $(LIBMONITOR)
 $(MONITOR): $(MONITOR_O) $(LIBMONITOR)
 	$(CC) -lm -o $@ $(MONITOR_O) -L . -lmonitor 
 
-producer: producer.o
-	$(CC) -o $@ producer.o
+producer: producer.o $(LIBMONITOR)
+	$(CC) -lm -o $@ producer.o -L . -lmonitor
 
-consumer: consumer.o
-	$(CC) -o $@ consumer.o
+consumer: consumer.o $(LIBMONITOR)
+	$(CC) -lm -o $@ consumer.o -L . -lmonitor
 
 .c.o:
 	$(CC) -c $(CFLAGS) $<

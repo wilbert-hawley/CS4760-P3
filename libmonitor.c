@@ -4,3 +4,5 @@
 void fun() {
   printf("\n\n~~~~~Static Library is working~~~~~~~\n\n");
 }
+
+char* logfile_name = "logfile";
