@@ -16,24 +16,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void help_message() {
-  printf("\nHelp Message - fill in later\n");
-  exit(0);
-}
-
-void error_halt(char* title) {
-    char* error_message = title;
-    strcat(error_message, ": Error");
-    errno = EINVAL;
-    perror(error_message);
-    exit(-1);
-}
 
 int shmid;
 int* shmp;
 
 int main(int argc, char** argv) {
-  fun();
   int producer_num = 2,
       consumer_num = 6,
       time_end = 100;
