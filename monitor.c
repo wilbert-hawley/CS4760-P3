@@ -96,25 +96,28 @@ int main(int argc, char** argv) {
   int i;
   for(i = 0; i < producer_num; i++) {
     child = fork();
-
+    //char num[50];
+    //sprintf(num, "%d", i);
+    //char* pr_arg = arg_str("./producer", num);
+    //printf("\npr_arg = %s", pr_arg);
     if(child == 0) {
       execl("./producer", "./producer", NULL);
-      printf("\nMade it out of producer, back in monitor.\n"); 
+      //execl("./producer", pr_arg, NULL);
+      //execl("./producer", "./producer", i, NULL);
     }
   }
 
-  for(i = 0; i < consumer_num; i++) {
+  for(i = 0; i < 2; i++) {
     child = fork();
     if(child == 0) {
       execl("./consumer", "./consumer", NULL);
-      printf("\nMade it out of conumer, back in monitor.\n");
     }
   }
 
   int status;
-   while ((child = wait(&status)) > 0);
+  while ((child = wait(&status)) > 0);
 
-  printf("\nAfter calling both children, shmp = %d", shmp->item);
+  printf("\nAfter calling both children, item = %d\n", shmp->item);
   
 
   shm_unlink (path);

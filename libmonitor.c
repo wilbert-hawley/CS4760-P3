@@ -20,9 +20,20 @@
 #include <semaphore.h>
 
 
-char* logfile_name = "logfile";
+char* logfile_name = "./logfile";
 
-char* path = "practice12"; 
+char* path = "practice20"; 
+
+char* arg_str(char* ex, char* num) {
+  char *final = malloc(strlen(ex) + strlen(num) + 2);
+  //printf("\nex = %s, num = %s", ex, num);
+  strcat(final, ex);
+  //printf("\nFinal = %s\n", final);
+  strcat(final, " ");
+  strcat(final, num);
+  //printf("\nFinal = %s\n", final);
+  return final;
+}
 
 void produce() {
   int shmid = shm_open(path, O_RDWR, 0);
@@ -30,8 +41,8 @@ void produce() {
     printf("\nProducer failed to open semaphore.\n");
     exit(1);
   }
-  else
-    printf("\nSemaphore opened in producer\n");
+  //else
+  //  printf("\nSemaphore opened in producer\n");
 
   struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);  
   if (shmp == MAP_FAILED) {
@@ -51,6 +62,10 @@ void produce() {
   shmp->item += 1;
   printf("\nProducer has decremented. Value of item = %d\n", shmp->item);
   //open an append file
+  FILE *file;
+  file = fopen(logfile_name,"a");
+  fprintf(file, "Producer wrote to file\n");
+  fclose(file);
   
   if (sem_post(&shmp->semS) == -1) {
     printf("\nsem_post(S) failed\n");
@@ -60,7 +75,7 @@ void produce() {
     printf("\nsem_post(E) failed\n");
     exit(1);
   } 
-  printf("\nMade it to the bottom of producer\n");
+  //printf("\nMade it to the bottom of producer\n");
 }
 
 void consume() {
@@ -89,7 +104,11 @@ void consume() {
   shmp->item -= 1;
   printf("\nConsumer has decremented. Value of item = %d\n", shmp->item);
   // open an append file
-  
+  FILE *file;
+  file = fopen(logfile_name,"a");
+  fprintf(file, "Consumer wrote to file\n");
+  fclose(file);
+ 
   if(sem_post(&shmp->semS) == -1) {
     printf("\nsem_post(S) failed\n");
     exit(1);
