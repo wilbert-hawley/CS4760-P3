@@ -60,17 +60,15 @@ int main(int argc, char** argv) {
   }
 
 
-  int fd = shm_open("/shared", O_CREAT | O_EXCL | O_RDWR,S_IRUSR | S_IWUSR);
-  if (fd == -1) {
+  shmid = shm_open(path, O_CREAT | O_EXCL | O_RDWR,S_IRUSR | S_IWUSR);
+  if (shmid == -1) {
 	printf("fd didn't work");
 	exit(1);
   } 
 
-  printf("\nvalue of fd = %d\n", fd);
-
-  ftruncate(fd, sizeof(struct shmbuf));
+  ftruncate(shmid, sizeof(struct shmbuf));
  
-  shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
 
   if (shmp == MAP_FAILED) {
 	printf("mmap didn't work");
@@ -78,71 +76,48 @@ int main(int argc, char** argv) {
   }  
 
   if(sem_init(&shmp->semS, 1, 1) == -1) {
-    printf("mmap didn't work");
+    printf("shmp->semS didn't work");
     exit(1);
   }
 
   if(sem_init(&shmp->semN, 1, 0) == -1) {
-    printf("mmap didn't work");
+    printf("shmp->semN didn't work");
     exit(1);
   }
 
   if(sem_init(&shmp->semN, 1, 4) == -1) {
-    printf("mmap didn't work");
+    printf("shmp->semN didn't work");
     exit(1);
   }
 
-
-
-  /*
-  printf("\n\nParsing Commences\n\n");
-  printf("\nName of logfile = %s", logfile_name);
-  printf("\nNumber of producers = %d", producer_num);
-  printf("\nNumber of consumers = %d", consumer_num);
-  printf("\nTime until termination = %d\n\n", time_end); 
-  
-  key_t sharedMemoryKey;
-  if ((sharedMemoryKey = ftok("./monitor.c", 0)) == ((key_t) - 1))
-  {
-    fprintf(stderr, "%s: ", argv[0]);
-    perror("Error: Failed to derive key from a.c\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if ((shmid = shmget(sharedMemoryKey, sizeof(int), IPC_CREAT | 0600)) == -1)
-  {
-    fprintf(stderr, "%s: ", argv[0]);
-    perror("Error: Failed to create semaphore with key\n");
-    exit(EXIT_FAILURE);
-  }
-
-  shmp = (int *)shmat(shmid, NULL, 0);
-
-  *shmp = 5; 
-
+  shmp->item = 5;
   int child;
 
-  child = fork();
+  int i;
+  for(i = 0; i < producer_num; i++) {
+    child = fork();
 
-  if(child == 0) {
-    execl("./producer", "./producer", NULL);
-    
+    if(child == 0) {
+      execl("./producer", "./producer", NULL);
+      printf("\nMade it out of producer, back in monitor.\n"); 
+    }
   }
 
-  child = fork();
-  if(child == 0) {
-    execl("./consumer", "./consumer", NULL);
+  for(i = 0; i < consumer_num; i++) {
+    child = fork();
+    if(child == 0) {
+      execl("./consumer", "./consumer", NULL);
+      printf("\nMade it out of conumer, back in monitor.\n");
+    }
   }
 
   int status;
    while ((child = wait(&status)) > 0);
 
-  printf("\nAfter calling both children, shmp = %d", *shmp);
+  printf("\nAfter calling both children, shmp = %d", shmp->item);
   
-  shmdt(shmp);
 
-  shmctl(shmid, IPC_RMID, NULL); */
-  shm_unlink ("/shared");
+  shm_unlink (path);
   if(logfile_flag)
     free(logfile_name);
   return EXIT_SUCCESS;

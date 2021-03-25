@@ -16,10 +16,10 @@ $(MONITOR): $(MONITOR_O) $(LIBMONITOR)
 	$(CC) -lm -o $@ $(MONITOR_O) -L . -lmonitor -lpthread -lrt 
 
 producer: producer.o $(LIBMONITOR)
-	$(CC) -lm -o $@ producer.o -L . -lmonitor
+	$(CC) -lm -o $@ producer.o -L . -lmonitor -lpthread -lrt
 
 consumer: consumer.o $(LIBMONITOR)
-	$(CC) -lm -o $@ consumer.o -L . -lmonitor
+	$(CC) -lm -o $@ consumer.o -L . -lmonitor -lpthread -lrt
 
 .c.o:
 	$(CC) -c $(CFLAGS) $<

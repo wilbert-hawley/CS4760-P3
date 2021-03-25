@@ -4,6 +4,7 @@
 
 void fun();
 extern char* logfile_name;
+extern char* path;
 void produce();
 void consume();
 void help_message();

@@ -10,65 +10,95 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
+#include <string.h>
+#include <getopt.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <semaphore.h>
 
 
 char* logfile_name = "logfile";
 
+char* path = "practice12"; 
+
 void produce() {
-  key_t sharedMemoryKey;
-  int shmid;
+  int shmid = shm_open(path, O_RDWR, 0);
+  if(shmid == -1) {
+    printf("\nProducer failed to open semaphore.\n");
+    exit(1);
+  }
+  else
+    printf("\nSemaphore opened in producer\n");
 
-  if ((sharedMemoryKey = ftok("./monitor.c", 0)) == ((key_t) - 1))
-  {
-    //fprintf(stderr, "%s: ", argv[0]);
-    perror("Error: Failed to derive key from a.c\n");
+  struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);  
+  if (shmp == MAP_FAILED) {
+    printf("\nmmap in producer failed\n");
+    exit(1);
+  }  
+
+  if (sem_wait(&shmp->semN) == -1) {
+    printf("\nsem_wait(E) failed\n");
+    exit(1);
+  }
+  if (sem_wait(&shmp->semS) == -1) {
+    printf("\nsem_wait(S) failed\n");
     exit(1);
   }
 
-  if ((shmid = shmget(sharedMemoryKey, sizeof(int), IPC_CREAT | 0600)) == -1)
-  {
-    //fprintf(stderr, "%s: ", argv[0]);
-    perror("Error: Failed to create semaphore with key\n");
+  shmp->item += 1;
+  printf("\nProducer has decremented. Value of item = %d\n", shmp->item);
+  //open an append file
+  
+  if (sem_post(&shmp->semS) == -1) {
+    printf("\nsem_post(S) failed\n");
     exit(1);
-  }
-  // sem_wait() function
-  //
-  int* shmp = (int *)shmat(shmid, NULL, 0);
-  
-  *shmp += 1;
-  printf("\nProducer just incremented = %d", *shmp);
-  printf("\nLogile = %s", logfile_name);
-  shmdt(shmp);
-  
-  //             // sem_post() function
+  } 
+  if (sem_post(&shmp->semE) == -1) {
+    printf("\nsem_post(E) failed\n");
+    exit(1);
+  } 
+  printf("\nMade it to the bottom of producer\n");
 }
 
 void consume() {
-  int shmid;
-  int* shmp;
-  key_t sharedMemoryKey;
-  if ((sharedMemoryKey = ftok("./monitor.c", 0)) == ((key_t) - 1))
-  {
-    //fprintf(stderr, "%s: ", argv[0]);
-    perror("Error: Failed to derive key from a.c\n");
-    exit(EXIT_FAILURE);
+  sleep(8);
+  int shmid = shm_open(path, O_RDWR, 0);
+  if(shmid == -1) {
+    printf("\nConsumer failed to open semaphore.\n");
+    exit(1);
   }
 
-  if ((shmid = shmget(sharedMemoryKey, sizeof(int), IPC_CREAT | 0600)) == -1)
-  {
-    //fprintf(stderr, "%s: ", argv[0]);
-    perror("Error: Failed to create semaphore with key\n");
-    exit(EXIT_FAILURE);
+  struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
+  if(shmp == MAP_FAILED) { 
+    printf("\nmmap in producer failed\n");
+    exit(1);
   }
 
-  // sem_wait() function
-  shmp = (int *)shmat(shmid, NULL, 0);
-  *shmp -= 1;
-  printf("\nConsumer called, decrementing %d", *shmp);
-  printf("\nlogfile named = %s", logfile_name);
-  // sem_post() function
-  shmdt(shmp);
+  if(sem_wait(&shmp->semE) == -1) { 
+    printf("\nsem_wait(E) failed\n");
+    exit(1);
+  }
+  if(sem_wait(&shmp->semS) == -1) {
+    printf("\nsem_wait(S) failed\n");
+    exit(1);
+  }
+  
+  shmp->item -= 1;
+  printf("\nConsumer has decremented. Value of item = %d\n", shmp->item);
+  // open an append file
+  
+  if(sem_post(&shmp->semS) == -1) {
+    printf("\nsem_post(S) failed\n");
+    exit(1);
+  }
+  if (sem_post(&shmp->semN) == -1) {
+    printf("\nsem_post(N) failed\n");
+    exit(1);
+  }
+
 }
 
 void help_message() {
