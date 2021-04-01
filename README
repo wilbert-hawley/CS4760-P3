@@ -1,1 +1,26 @@
-To do
+README
+
+Name: Wilbert Hawley
+Email: wsh275@umsystem.edu
+Date: 4/1/21
+Program: monitor, producer, consumer
+CS4760 - Assignment 3
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Adjustments:
+	- Did not implement the control-c interupt handler
+	- Works most of the time. Had some issues with changing the number of consumer and producers. Sometimes breaks the process but I was unable to diagnose. 
+	- May have to change the path variable in libmonitor.c after aborted attempt.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+How To Run:
+	- On command line: make
+	- Check executable name (defualt should be monitor)
+	- Run program with: ./monitor
+	- For help, use -h option.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Changelog:

@@ -15,4 +15,10 @@ struct shmbuf {
   sem_t semN;
   sem_t semE;
   int item;
+  pid_t array[100];
 };
+
+int setupTime(int);
+int timerInterrupt();
+void sig_alrm_handler();
+void processKiller();

@@ -22,11 +22,10 @@ int shmid;
 struct shmbuf *shmp;
 
 int main(int argc, char** argv) {
+  bool logfile_flag = false;
   int producer_num = 2,
       consumer_num = 6,
       time_end = 100;
-  bool logfile_flag = false;
-
   char options;
   while (true) {
     options = getopt(argc, argv, ":ho:p:c:t:");
@@ -59,11 +58,32 @@ int main(int argc, char** argv) {
      }
   }
 
+  if(producer_num > consumer_num)
+  {
+    while(producer_num > consumer_num)
+      consumer_num++;
+    printf("Conumer number increased to %d so that there are more consumers than producers", consumer_num); 
+  }
+
+  if (setupTimer(time_end) == -1)
+  {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("Failed to set up the ITIMER_REAL interval timer");
+    exit(1);;
+  }
+
+  if (timerInterrupt() == -1)
+  {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("Failed to set up the inturrept SIGALRM");
+    exit(1);
+  }
 
   shmid = shm_open(path, O_CREAT | O_EXCL | O_RDWR,S_IRUSR | S_IWUSR);
   if (shmid == -1) {
-	printf("fd didn't work");
-	exit(1);
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("Shared memory failed to open. Change path variable. See -h for instructions");
+    exit(1);
   } 
 
   ftruncate(shmid, sizeof(struct shmbuf));
@@ -71,39 +91,44 @@ int main(int argc, char** argv) {
   shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
 
   if (shmp == MAP_FAILED) {
-	printf("mmap didn't work");
-	exit(1);
+    fprintf(stderr, "%s: ", argv[0]);        
+    perror("mmap didn't work");
+    exit(1);
   }  
 
   if(sem_init(&shmp->semS, 1, 1) == -1) {
-    printf("shmp->semS didn't work");
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("shmp->semS didn't work");
     exit(1);
   }
 
   if(sem_init(&shmp->semN, 1, 0) == -1) {
-    printf("shmp->semN didn't work");
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("shmp->semN didn't work");
     exit(1);
   }
 
   if(sem_init(&shmp->semN, 1, 4) == -1) {
-    printf("shmp->semN didn't work");
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("shmp->semN didn't work");
     exit(1);
   }
 
-  shmp->item = 5;
+  shmp->item = 0;
   int child;
 
+  int p = 0;
   int i;
   for(i = 0; i < producer_num; i++) {
     child = fork();
     char num[50];
     sprintf(num, "%d", i);
-    //char* pr_arg = arg_str("./producer", num);
-    //printf("\npr_arg = %s", pr_arg);
-    if(child == 0) {
-      //execl("./producer", "./producer", NULL);
+    
+    if(child == 0)
       execl("./producer", "./producer", num, NULL);
-      //execl("./producer", "./producer", i, NULL);
+    else {
+      shmp->array[p] = child;
+      p++; 
     }
   }
 
@@ -112,8 +137,11 @@ int main(int argc, char** argv) {
     char num2[50];
     sprintf(num2, "%d", i);
 
-    if(child == 0) {
+    if(child == 0)
       execl("./consumer", "./consumer", num2, NULL);
+    else {
+      shmp->array[p] = child;
+      p++;
     }
   }
 
@@ -124,7 +152,9 @@ int main(int argc, char** argv) {
   
 
   shm_unlink (path);
-  if(logfile_flag)
+  if(logfile_flag) {
+    printf("\n~~~~~%s\n", logfile_name);
     free(logfile_name);
+  }
   return EXIT_SUCCESS;
 }
