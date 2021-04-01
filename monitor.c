@@ -96,21 +96,24 @@ int main(int argc, char** argv) {
   int i;
   for(i = 0; i < producer_num; i++) {
     child = fork();
-    //char num[50];
-    //sprintf(num, "%d", i);
+    char num[50];
+    sprintf(num, "%d", i);
     //char* pr_arg = arg_str("./producer", num);
     //printf("\npr_arg = %s", pr_arg);
     if(child == 0) {
-      execl("./producer", "./producer", NULL);
-      //execl("./producer", pr_arg, NULL);
+      //execl("./producer", "./producer", NULL);
+      execl("./producer", "./producer", num, NULL);
       //execl("./producer", "./producer", i, NULL);
     }
   }
 
-  for(i = 0; i < 2; i++) {
+  for(i = 0; i < consumer_num; i++) {
     child = fork();
+    char num2[50];
+    sprintf(num2, "%d", i);
+
     if(child == 0) {
-      execl("./consumer", "./consumer", NULL);
+      execl("./consumer", "./consumer", num2, NULL);
     }
   }
 

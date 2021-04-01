@@ -5,8 +5,8 @@
 void fun();
 extern char* logfile_name;
 extern char* path;
-void produce();
-void consume();
+void produce(int);
+void consume(int);
 void help_message();
 void error_halt(char*);
 

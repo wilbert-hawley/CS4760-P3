@@ -12,5 +12,6 @@
 #include <sys/wait.h>
 
 int main(int argc, char** argv) {
-  consume();
+  int x = atoi(argv[1]);
+  consume(x);
 }

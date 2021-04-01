@@ -18,11 +18,11 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <semaphore.h>
-
+#include <time.h>
 
 char* logfile_name = "./logfile";
 
-char* path = "practice20"; 
+char* path = "practice21"; 
 
 char* arg_str(char* ex, char* num) {
   char *final = malloc(strlen(ex) + strlen(num) + 2);
@@ -35,7 +35,7 @@ char* arg_str(char* ex, char* num) {
   return final;
 }
 
-void produce() {
+void produce(int x) {
   int shmid = shm_open(path, O_RDWR, 0);
   if(shmid == -1) {
     printf("\nProducer failed to open semaphore.\n");
@@ -49,7 +49,8 @@ void produce() {
     printf("\nmmap in producer failed\n");
     exit(1);
   }  
-
+  int count = 0;
+  while(count < 4) {
   if (sem_wait(&shmp->semN) == -1) {
     printf("\nsem_wait(E) failed\n");
     exit(1);
@@ -62,11 +63,14 @@ void produce() {
   shmp->item += 1;
   printf("\nProducer has decremented. Value of item = %d\n", shmp->item);
   //open an append file
+  time_t now;
+  time(&now);
+
   FILE *file;
   file = fopen(logfile_name,"a");
-  fprintf(file, "Producer wrote to file\n");
+  fprintf(file, "Producer %d wrote to the logfile at %s\n", x, ctime(&now));
   fclose(file);
-  
+  //printf("\nToday is : %s\n", ctime(&now));  
   if (sem_post(&shmp->semS) == -1) {
     printf("\nsem_post(S) failed\n");
     exit(1);
@@ -74,11 +78,12 @@ void produce() {
   if (sem_post(&shmp->semE) == -1) {
     printf("\nsem_post(E) failed\n");
     exit(1);
+  }
+    count++;
   } 
-  //printf("\nMade it to the bottom of producer\n");
 }
 
-void consume() {
+void consume(int x) {
   sleep(8);
   int shmid = shm_open(path, O_RDWR, 0);
   if(shmid == -1) {
@@ -106,7 +111,7 @@ void consume() {
   // open an append file
   FILE *file;
   file = fopen(logfile_name,"a");
-  fprintf(file, "Consumer wrote to file\n");
+  fprintf(file, "Consumer %d wrote to file\n", x);
   fclose(file);
  
   if(sem_post(&shmp->semS) == -1) {
