@@ -10,7 +10,7 @@ CS4760 - Assignment 3
 
 Adjustments:
 	- Did not implement the control-c interupt handler
-	- Works most of the time. Had some issues with changing the number of consumer and producers. Sometimes breaks the process but I was unable to diagnose. 
+	- Works about half  of the time. Had some issues with changing the number of consumer and producers. Sometimes breaks the process but I was unable to diagnose. 
 	- May have to change the path variable in libmonitor.c after aborted attempt.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,7 +20,11 @@ How To Run:
 	- Check executable name (defualt should be monitor)
 	- Run program with: ./monitor
 	- For help, use -h option.
-
+        - To change terminattion time, try -t time
+        - To change number of consumers, try -c n
+        - TO change number of producers, try -p m
+        - To change logfile name, try -o file
+        - Run make clean to clear out object files and logfile.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Changelog:

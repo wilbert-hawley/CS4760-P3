@@ -1,7 +1,8 @@
 // libmonitor header file
 
 #include <semaphore.h>
-
+#include <stdbool.h>
+#include <signal.h>
 void fun();
 extern char* logfile_name;
 extern char* path;
@@ -22,3 +23,4 @@ int setupTime(int);
 int timerInterrupt();
 void sig_alrm_handler();
 void processKiller();
+void term_handler(sig_t); 

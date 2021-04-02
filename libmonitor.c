@@ -21,10 +21,14 @@
 #include <time.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <stdbool.h>
+#include <signal.h>
 
 char* logfile_name = "./logfile";
 
-char* path = "practice41"; 
+char* path = "practice51"; 
+
+bool random_flag = false;
 
 char* arg_str(char* ex, char* num) {
   char *final = malloc(strlen(ex) + strlen(num) + 2);
@@ -35,11 +39,12 @@ char* arg_str(char* ex, char* num) {
 }
 
 void produce(int x) {
-  time_t t;
-  srand((unsigned) time(&t));
-  int r = rand() % 5;
-  sleep(r + 1);
-
+  if (random_flag) { 
+    time_t t;
+    srand((unsigned) time(&t));
+    int r = rand() % 5;
+    sleep(r + 1);
+  }
   int shmid = shm_open(path, O_RDWR, 0);
   if(shmid == -1) {
     fprintf(stderr, "producer:");
@@ -91,10 +96,13 @@ void produce(int x) {
 }
 
 void consume(int x) {
-  time_t t;
-  srand((unsigned) time(&t));
-  int r = rand() % 10;
-  sleep(r + 1);
+  int r = 10;
+  if (random_flag) {
+    time_t t;
+    srand((unsigned) time(&t));
+    int r = rand() % 10;
+  }
+  sleep(r);
   int shmid = shm_open(path, O_RDWR, 0);
   if(shmid == -1) {
     fprintf(stderr, "consumer:");
@@ -126,7 +134,7 @@ void consume(int x) {
 
   FILE *file;
   file = fopen(logfile_name,"a");
-  fprintf(file, "Consumer %d wrote to the logfile at %s\n", x, ctime(&now));
+  fprintf(file, "Consumer %d wrote to the logfile at %s", x, ctime(&now));
   fclose(file);
  
   if(sem_post(&shmp->semS) == -1) {
@@ -225,4 +233,9 @@ void processKiller()
   shmctl(shmid, IPC_RMID, NULL);
   shm_unlink (path);
   exit(0);
+}
+
+void term_handler(sig_t s) {
+  printf("\ncontrol-c caught\n");
+  exit(1);
 }

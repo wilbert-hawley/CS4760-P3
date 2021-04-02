@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include "libmonitor.h"
-
+#include <signal.h>
 int shmid;
 struct shmbuf *shmp;
 
@@ -26,7 +26,9 @@ int main(int argc, char** argv) {
   int producer_num = 2,
       consumer_num = 6,
       time_end = 100;
+  char* logfile_name2;
   char options;
+  //signal(SIGINT, term_handler);
   while (true) {
     options = getopt(argc, argv, ":ho:p:c:t:");
     
@@ -38,7 +40,7 @@ int main(int argc, char** argv) {
         help_message();  
       case 'o':
 	printf("\nOption -%c: %s\n", options, optarg);
-        logfile_name = strdup(optarg);
+        logfile_name2 = strdup(optarg);
         logfile_flag = true;
         break;
       case 'p':
@@ -153,8 +155,37 @@ int main(int argc, char** argv) {
 
   shm_unlink (path);
   if(logfile_flag) {
-    printf("\n~~~~~%s\n", logfile_name);
-    free(logfile_name);
+    printf("\n~~~~~%s\n", logfile_name2);
+    printf("\n here1");
+    FILE *f1;
+    printf("\n here1");
+    f1 = fopen("./logfile", "r");
+    if(f1 == NULL)
+    {
+      fprintf(stderr, "%s: ", argv[0]);
+	perror("Error opening logfile to copy.");
+	exit(1);
+    }  
+
+    FILE *f2;
+    f2 = fopen(logfile_name2, "w");
+    if(f2 == NULL)
+    {
+	fprintf(stderr, "%s: ", argv[0]);
+	perror("Error opening custom logfile to write.");
+	exit(1);
+    }
+
+    char c = fgetc(f1);
+    while (c != EOF)
+    {
+      fputc(c, f2);
+      c = fgetc(f1);
+    }
+
+    fclose(f1);
+    fclose(f2);    
+    free(logfile_name2);
   }
   return EXIT_SUCCESS;
 }
