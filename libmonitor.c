@@ -28,7 +28,7 @@ char* logfile_name = "./logfile";
 
 char* path = "practice51"; 
 
-bool random_flag = false;
+bool random_flag = true;
 
 char* arg_str(char* ex, char* num) {
   char *final = malloc(strlen(ex) + strlen(num) + 2);
@@ -39,25 +39,6 @@ char* arg_str(char* ex, char* num) {
 }
 
 void produce(int x) {
-  if (random_flag) { 
-    time_t t;
-    srand((unsigned) time(&t));
-    int r = rand() % 5;
-    sleep(r + 1);
-  }
-  /*int shmid = shm_open(path, O_RDWR, 0);
-  if(shmid == -1) {
-    fprintf(stderr, "producer:");
-    perror("Producer failed to open semaphore.\n");
-    exit(1);
-  }
-  
-  struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);  
-  if (shmp == MAP_FAILED) {
-    fprintf(stderr, "producer:");
-    perror("mmap in producer failed");
-    exit(1);
-  }*/
 
   key_t sharedMemoryKey;
   if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
@@ -109,30 +90,23 @@ void produce(int x) {
       exit(1);
     }
     count++;
+    if (random_flag) {
+      time_t t;
+      srand((unsigned) time(&t));
+      int r = rand() % 5;
+      sleep(r + 1);
+    }
   } 
 }
 
 void consume(int x) {
   int r = 1;
-  if (random_flag) {
+  /*if (random_flag) {
     time_t t;
     srand((unsigned) time(&t));
     int r = rand() % 10;
   }
-  sleep(r);
-  /*int shmid = shm_open(path, O_RDWR, 0);
-  if(shmid == -1) {
-    fprintf(stderr, "consumer:");
-    perror("Consumer failed to open semaphore.");
-    exit(1);
-  }
-
-  struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
-  if(shmp == MAP_FAILED) { 
-    fprintf(stderr, "consumer:");
-    perror("mmap in producer failed");
-    exit(1);
-  }*/
+  sleep(r);*/
 
   key_t sharedMemoryKey;
   if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
@@ -150,7 +124,13 @@ void consume(int x) {
   }
 
   struct shmbuf *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
-
+while(1) {
+  if (random_flag) {
+    time_t t;
+    srand((unsigned) time(&t));
+    int r = rand() % 10;
+  }
+  sleep(r);
   if(sem_wait(&shmp->semE) == -1) { 
     fprintf(stderr, "consumer:");
     perror("sem_wait(E) failed");
@@ -182,7 +162,7 @@ void consume(int x) {
     perror("\nsem_post(N) failed\n");
     exit(1);
   }
-
+}
 }
 
 void help_message() {
@@ -255,10 +235,6 @@ int timerInterrupt()
 
 void processKiller()
 {
-  //int shmid = shm_open(path, O_RDWR, 0);
-
-  //struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
-  //printf("%ld", shmp->array[0]);
   key_t sharedMemoryKey;
   if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
   {
@@ -274,14 +250,18 @@ void processKiller()
     exit(EXIT_FAILURE);
   }
 
-  struct *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
+  struct shmbuf *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
   int i; 
   for(i = 0; i < 100; i++) {
-    kill(shmp->array[i], SIGKILL);
+    printf("killed child\n");
+    if( shmp->array[i] == 0) {
+      break;
+    }
+    kill(shmp->array[i], SIGTERM);
   }
+  printf("\nkilling shared memory");
   shmdt(shmp);
   shmctl(shmid, IPC_RMID, NULL);
-  //shm_unlink (path);
   exit(0);
 }
 

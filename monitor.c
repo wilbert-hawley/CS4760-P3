@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  if(sem_init(&shmp->semN, 1, 0) == -1) {
+  if(sem_init(&shmp->semE, 1, 0) == -1) {
     fprintf(stderr, "%s: ", argv[0]);
     perror("shmp->semN didn't work");
     exit(1);
