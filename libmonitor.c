@@ -45,7 +45,7 @@ void produce(int x) {
     int r = rand() % 5;
     sleep(r + 1);
   }
-  int shmid = shm_open(path, O_RDWR, 0);
+  /*int shmid = shm_open(path, O_RDWR, 0);
   if(shmid == -1) {
     fprintf(stderr, "producer:");
     perror("Producer failed to open semaphore.\n");
@@ -57,10 +57,27 @@ void produce(int x) {
     fprintf(stderr, "producer:");
     perror("mmap in producer failed");
     exit(1);
+  }*/
+
+  key_t sharedMemoryKey;
+  if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
+  {
+    fprintf(stderr, "producer: ");
+    perror("Error: Failed to derive key from a.c\n");
+    exit(EXIT_FAILURE);
   }
+  int shmid;
+  if ((shmid = shmget(sharedMemoryKey, sizeof(struct shmbuf), IPC_CREAT | 0600)) == -1)
+  {
+    fprintf(stderr, "producer: ");
+    perror("Error: Failed to create semaphore with key\n");
+    exit(EXIT_FAILURE);
+  }
+
+  struct shmbuf *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
   
   int count = 0;
-  while(count < 4) {
+  while(1) {
     if (sem_wait(&shmp->semN) == -1) {
       fprintf(stderr, "producer:");
       perror("sem_wait(N) failed");
@@ -96,14 +113,14 @@ void produce(int x) {
 }
 
 void consume(int x) {
-  int r = 10;
+  int r = 1;
   if (random_flag) {
     time_t t;
     srand((unsigned) time(&t));
     int r = rand() % 10;
   }
   sleep(r);
-  int shmid = shm_open(path, O_RDWR, 0);
+  /*int shmid = shm_open(path, O_RDWR, 0);
   if(shmid == -1) {
     fprintf(stderr, "consumer:");
     perror("Consumer failed to open semaphore.");
@@ -115,7 +132,24 @@ void consume(int x) {
     fprintf(stderr, "consumer:");
     perror("mmap in producer failed");
     exit(1);
+  }*/
+
+  key_t sharedMemoryKey;
+  if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
+  {
+    fprintf(stderr, "consumer:");
+    perror("Error: Failed to derive key from a.c\n");
+    exit(EXIT_FAILURE);
   }
+  int shmid;
+  if ((shmid = shmget(sharedMemoryKey, sizeof(struct shmbuf), IPC_CREAT | 0600)) == -1)
+  {
+    fprintf(stderr, "consumer:");
+    perror("Error: Failed to create semaphore with key\n");
+    exit(EXIT_FAILURE);
+  }
+
+  struct shmbuf *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
 
   if(sem_wait(&shmp->semE) == -1) { 
     fprintf(stderr, "consumer:");
@@ -127,7 +161,8 @@ void consume(int x) {
     perror("sem_wait(S) failed");
     exit(1);
   }
-  
+ 
+  // Critical section 
   shmp->item -= 1;
   time_t now;
   time(&now);
@@ -220,22 +255,50 @@ int timerInterrupt()
 
 void processKiller()
 {
-  int shmid = shm_open(path, O_RDWR, 0);
+  //int shmid = shm_open(path, O_RDWR, 0);
 
-  struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
-  printf("%ld", shmp->array[0]);
-  
+  //struct shmbuf *shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
+  //printf("%ld", shmp->array[0]);
+  key_t sharedMemoryKey;
+  if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
+  {
+    //fprintf(stderr, "%s: ", argv[0]);
+    perror("Error: Failed to derive key from a.c\n");
+    exit(EXIT_FAILURE);
+  }
+  int shmid;
+  if ((shmid = shmget(sharedMemoryKey, sizeof(struct shmbuf), IPC_CREAT | 0600)) == -1)
+  {
+    //fprintf(stderr, "%s: ", argv[0]);
+    perror("Error: Failed to create semaphore with key\n");
+    exit(EXIT_FAILURE);
+  }
+
+  struct *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
   int i; 
   for(i = 0; i < 100; i++) {
     kill(shmp->array[i], SIGKILL);
   }
   shmdt(shmp);
   shmctl(shmid, IPC_RMID, NULL);
-  shm_unlink (path);
+  //shm_unlink (path);
   exit(0);
 }
 
-void term_handler(sig_t s) {
-  printf("\ncontrol-c caught\n");
-  exit(1);
+void sig_int_handler()
+{
+    fprintf(stderr, "monitor:");
+    perror("ctrl-c interupt, all children terminated.\n");
+    processKiller();
+}
+
+
+int start_ctrlc_int_handler()
+{
+  struct sigaction act;
+
+  act.sa_handler = sig_int_handler;
+  act.sa_flags = 0;
+
+  return (sigemptyset(&act.sa_mask) || sigaction(SIGINT, &act, NULL));
 }

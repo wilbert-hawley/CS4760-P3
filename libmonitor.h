@@ -3,7 +3,9 @@
 #include <semaphore.h>
 #include <stdbool.h>
 #include <signal.h>
-void fun();
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 extern char* logfile_name;
 extern char* path;
 void produce(int);
@@ -23,4 +25,5 @@ int setupTime(int);
 int timerInterrupt();
 void sig_alrm_handler();
 void processKiller();
-void term_handler(sig_t); 
+void sig_int_handler();
+int start_ctrlc_int_handler();

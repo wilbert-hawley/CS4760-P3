@@ -12,7 +12,7 @@ Adjustments:
 	- Did not implement the control-c interupt handler
 	- Works about half  of the time. Had some issues with changing the number of consumer and producers. Sometimes breaks the process but I was unable to diagnose. 
 	- May have to change the path variable in libmonitor.c after aborted attempt.
-
+        - Had issues with randome sleep times. There is variable called random_flag which can be set to true if you wish to see the behavior with random sleep times for consumer and producer. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 How To Run:
@@ -28,3 +28,86 @@ How To Run:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Changelog:
+commit c6d8ab9c3cb5a9f1b80160d838f4128eaaef3068
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Fri Apr 2 03:29:40 2021 -0500
+
+    Fixed the option to change the logfile name.
+
+commit 584bad5134c4d54edb5048dffa4beeeaaf4d62b0
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Thu Apr 1 03:26:28 2021 -0500
+
+    Finished project. Filled out README. Added time handlers to the libmonitor.c as well as a killing process. Added perror throughout program.
+
+commit 52f80d5b8e16080838e0728510336c73923aad9c
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Wed Mar 31 20:03:18 2021 -0500
+
+    Producer is writing to a shared file which is tracking the times.
+
+commit dc308ba7d5525c0cd3f280a260a56dcfabb2175f
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Thu Mar 25 03:23:58 2021 -0500
+
+    The producer and consumer are writing to a shared file.
+
+commit 2115ac2f3fb22e2deff90385a2b31a358b315446
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Thu Mar 25 02:04:29 2021 -0500
+
+    Implemented semaphores and got my child processes to work on the same variable. Next, I need to open and append to a file.
+
+commit 131f5020a9c65aa518a813ed797be6431850f161
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Wed Mar 24 17:39:47 2021 -0500
+
+    Implemented a semaphore into my monitor.c. I have confirmed it is opening and I am initializing all three emaphores without error. Next will be to implement the wait/post methods in my producer.c and consumer.c.
+
+commit f089cf1cb1d7f02fa5e472bdada811ac2d553af4
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Wed Mar 24 13:55:17 2021 -0500
+
+    Moved the producer and consumer functions into the libmonitor.c.
+
+commit 64d7e2f623fadb4aea3bc37a8bbe52971e6c1bb7
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Wed Mar 24 12:48:55 2021 -0500
+
+    Created shared memory and opened multiple threads to increment/decrement an item.
+
+commit 5936a8135d6bd839e317bf4b3eaa1def1a826085
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Thu Mar 11 00:47:47 2021 -0600
+
+    Thanks to Prof Bhatia, I got my Makefile working with the static library. I also added consumer.c and producer.c, which compile and run correctly. Next up is setting up shared memory in monitor.c.
+
+commit 7afafdecab8a1b395ca82675946d43a6263a03a7
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Wed Mar 10 00:53:25 2021 -0600
+
+    Added the libmonitor files as specified by Bhatia on teams. I'm attempting to connect a static library to my main executable. The static library appears(?) to be created but the files have yet to link. I'm unable to call the fun() function found in the libmonitor library. Need to ask for help with how to get it connected before I move functions over there.
+
+commit 67f92d40bccda6f52cd05605eb04615dd09dbe06
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Wed Mar 10 00:01:41 2021 -0600
+
+    Finalized getting all of the inputs into dedicated variables.
+
+commit 2a0b1df73b03ac3ff007552e00c996ba81859f22
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Tue Mar 9 01:39:44 2021 -0600
+
+    Parsed command lines and read in options. Also added a .gitignore which will be expanded later.
+
+commit 0cf044162f509f5f9daf1f0f41a2bdb930d9824e
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Tue Mar 9 00:37:14 2021 -0600
+
+    Adding read me
+
+commit 8996299ecf870621155b9ae99c41f2a64fb9d19f
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Mon Mar 8 14:46:03 2021 -0600
+
+    first commit

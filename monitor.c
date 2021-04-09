@@ -81,22 +81,30 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  shmid = shm_open(path, O_CREAT | O_EXCL | O_RDWR,S_IRUSR | S_IWUSR);
-  if (shmid == -1) {
+  if (start_ctrlc_int_handler() == -1) 
+  {
     fprintf(stderr, "%s: ", argv[0]);
-    perror("Shared memory failed to open. Change path variable. See -h for instructions");
+    perror("Failed to set up the SIGINT handler\n");
     exit(1);
-  } 
+  }
 
-  ftruncate(shmid, sizeof(struct shmbuf));
- 
-  shmp = mmap(NULL, sizeof(*shmp), PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
+  // Set up shared memory
+  key_t sharedMemoryKey;
+  if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
+  {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("Error: Failed to derive key from a.c\n");
+    exit(EXIT_FAILURE);
+  }
 
-  if (shmp == MAP_FAILED) {
-    fprintf(stderr, "%s: ", argv[0]);        
-    perror("mmap didn't work");
-    exit(1);
-  }  
+  if ((shmid = shmget(sharedMemoryKey, sizeof(struct shmbuf), IPC_CREAT | 0600)) == -1)
+  {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("Error: Failed to create semaphore with key\n");
+    exit(EXIT_FAILURE);
+  }
+
+  shmp = (struct shmbuf *)shmat(shmid, NULL, 0);  
 
   if(sem_init(&shmp->semS, 1, 1) == -1) {
     fprintf(stderr, "%s: ", argv[0]);
@@ -110,7 +118,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  if(sem_init(&shmp->semN, 1, 4) == -1) {
+  if(sem_init(&shmp->semN, 1, 1) == -1) {
     fprintf(stderr, "%s: ", argv[0]);
     perror("shmp->semN didn't work");
     exit(1);
@@ -153,6 +161,13 @@ int main(int argc, char** argv) {
   printf("\nAfter calling both children, item = %d\n", shmp->item);
   
 
+  shmdt(shmp);
+
+  if (shmctl(shmid, IPC_RMID, NULL) == -1)
+  {
+    perror("Error: Failed to destory shared memory segment.");
+    exit(EXIT_FAILURE);
+  }
   shm_unlink (path);
   if(logfile_flag) {
     printf("\n~~~~~%s\n", logfile_name2);
