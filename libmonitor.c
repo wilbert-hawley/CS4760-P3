@@ -39,7 +39,8 @@ char* arg_str(char* ex, char* num) {
 }
 
 void produce(int x) {
-
+  time_t now;
+  FILE *file;
   key_t sharedMemoryKey;
   if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
   {
@@ -57,7 +58,8 @@ void produce(int x) {
 
   struct shmbuf *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
   
-  int count = 0;
+  int count = 0,
+      flag = 0;
   while(1) {
     if (sem_wait(&shmp->semN) == -1) {
       fprintf(stderr, "producer:");
@@ -70,11 +72,36 @@ void produce(int x) {
       exit(1);
     }
 
-    shmp->item += 1;
-    time_t now;
+    /*if(shmp->item < 4) {
+      shmp->item += 1;
+      time(&now);
+
+      file = fopen(logfile_name,"a");
+      fprintf(file, "Producer %d wrote to the logfile at %s", x, ctime(&now));
+      fclose(file);
+    }
+    else
+      flag = 1;
+    */
+    if(shmp->consumer_count >= shmp->consumer_num) {
+      //printf("\nleaving producer %d\n", x);
+      if(sem_post(&shmp->semS) == -1) {
+        fprintf(stderr, "consumer:");
+        printf("sem_post(S) failed");
+        exit(1);
+      }
+      if (sem_post(&shmp->semN) == -1) {
+        fprintf(stderr, "consumer:");
+        perror("\nsem_post(N) failed\n");
+        exit(1);
+      }
+      printf("\nProducer %d detaching from shared memory", x);
+      shmdt(shmp);
+      return;
+    }
+    shmp->item += 1; 
     time(&now);
 
-    FILE *file;
     file = fopen(logfile_name,"a");
     fprintf(file, "Producer %d wrote to the logfile at %s", x, ctime(&now));
     fclose(file);
@@ -89,25 +116,21 @@ void produce(int x) {
       perror("\nsem_post(E) failed\n");
       exit(1);
     }
-    count++;
     if (random_flag) {
       time_t t;
       srand((unsigned) time(&t));
       int r = rand() % 5;
+      printf("Producer %d about to sleep for %d seconds\n", x, r);
       sleep(r + 1);
+      printf("Producer %d woke up after %d seconds\n", x, r);
     }
   } 
 }
 
 void consume(int x) {
   int r = 1;
-  /*if (random_flag) {
-    time_t t;
-    srand((unsigned) time(&t));
-    int r = rand() % 10;
-  }
-  sleep(r);*/
-
+  time_t now;
+  FILE *file;
   key_t sharedMemoryKey;
   if ((sharedMemoryKey = ftok("./README", 0)) == ((key_t) - 1))
   {
@@ -124,13 +147,15 @@ void consume(int x) {
   }
 
   struct shmbuf *shmp = (struct shmbuf *)shmat(shmid, NULL, 0);
-while(1) {
+
   if (random_flag) {
-    time_t t;
-    srand((unsigned) time(&t));
-    int r = rand() % 10;
+    //time_t t;
+    srand((unsigned int) time(NULL)+x);
+    r = rand() % 10;
+    printf("Consumer %d about to sleep for %d seconds\n", x, r);
   }
   sleep(r);
+  printf("Consumer %d woke up after  %d seconds\n", x, r);
   if(sem_wait(&shmp->semE) == -1) { 
     fprintf(stderr, "consumer:");
     perror("sem_wait(E) failed");
@@ -144,10 +169,9 @@ while(1) {
  
   // Critical section 
   shmp->item -= 1;
-  time_t now;
+  shmp->consumer_count++;
   time(&now);
 
-  FILE *file;
   file = fopen(logfile_name,"a");
   fprintf(file, "Consumer %d wrote to the logfile at %s", x, ctime(&now));
   fclose(file);
@@ -162,7 +186,9 @@ while(1) {
     perror("\nsem_post(N) failed\n");
     exit(1);
   }
-}
+  // detaching consumer from shared memory
+  shmdt(shmp);
+  return;
 }
 
 void help_message() {

@@ -59,12 +59,12 @@ int main(int argc, char** argv) {
          error_halt(argv[0]);
      }
   }
-
-  if(producer_num > consumer_num)
+  
+  if(producer_num >= consumer_num)
   {
-    while(producer_num > consumer_num)
+    while(producer_num >= consumer_num) {
       consumer_num++;
-    printf("Conumer number increased to %d so that there are more consumers than producers", consumer_num); 
+    }
   }
 
   if (setupTimer(time_end) == -1)
@@ -118,18 +118,27 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  if(sem_init(&shmp->semN, 1, 1) == -1) {
+  if(sem_init(&shmp->semN, 1, 4) == -1) {
     fprintf(stderr, "%s: ", argv[0]);
     perror("shmp->semN didn't work");
     exit(1);
   }
 
   shmp->item = 0;
-  int child;
-
-  int p = 0;
-  int i;
+  shmp->consumer_count = 0;
+  shmp->consumer_num = consumer_num;
+  
+  int child,
+      proc_num = 0,
+      proc_max = 19,
+      p = 0,
+      i;
   for(i = 0; i < producer_num; i++) {
+    if(proc_num > proc_max) {
+      printf("Reached proc_max, waiting\n");
+      wait(NULL);
+      proc_num--;
+    }
     child = fork();
     char num[50];
     sprintf(num, "%d", i);
@@ -138,11 +147,17 @@ int main(int argc, char** argv) {
       execl("./producer", "./producer", num, NULL);
     else {
       shmp->array[p] = child;
-      p++; 
+      p++;
+      proc_num++; 
     }
   }
 
   for(i = 0; i < consumer_num; i++) {
+    if(proc_num > proc_max) {
+      printf("Reached proc_max in consumer loop, waiting\n");
+      wait(NULL);
+      proc_num--;
+    }
     child = fork();
     char num2[50];
     sprintf(num2, "%d", i);
@@ -152,14 +167,28 @@ int main(int argc, char** argv) {
     else {
       shmp->array[p] = child;
       p++;
+      proc_num++;
     }
   }
 
   int status;
-  while ((child = wait(&status)) > 0);
+  while ((child = wait(&status)) > 0) {
+    //printf("one child has died\n");
+  }
+  /*while(proc_num > producer_num) {
+    wait(NULL);
+    proc_num--;
+  }*/
 
   printf("\nAfter calling both children, item = %d\n", shmp->item);
-  
+  printf("\nshmp->consumer_num = %d, consumer_num = %d\n", shmp->consumer_num, consumer_num); 
+ /* for(i = 0; i < 100; i++) {
+    printf("killed child\n");
+    if( shmp->array[i] == 0) {
+      break;
+    }
+    kill(shmp->array[i], SIGTERM);
+  }*/  
 
   shmdt(shmp);
 
@@ -168,7 +197,7 @@ int main(int argc, char** argv) {
     perror("Error: Failed to destory shared memory segment.");
     exit(EXIT_FAILURE);
   }
-  shm_unlink (path);
+  
   if(logfile_flag) {
     printf("\n~~~~~%s\n", logfile_name2);
     printf("\n here1");

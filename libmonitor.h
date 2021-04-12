@@ -19,6 +19,8 @@ struct shmbuf {
   sem_t semE;
   int item;
   pid_t array[100];
+  int consumer_num;
+  int consumer_count;
 };
 
 int setupTime(int);
