@@ -27,7 +27,39 @@ How To Run:
         - Run make clean to clear out object files and logfile.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Changelog:
+Change Log:
+
+
+commit 6667d89bf49e1ae80dbf06438bcd64a188828b73
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Mon Apr 26 12:31:55 2021 -0500
+
+    Finished project. Removed a bunch of print statements and added in some more error handling.
+
+commit 5e9624622115d6ef567bdad92496702c6c18f552
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Mon Apr 26 11:33:01 2021 -0500
+
+    Some finishing touches.
+
+commit d2939207eb9acdc1a3b723396f71a7b8217501ef
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Mon Apr 12 17:21:11 2021 -0500
+
+    Project is now working perfectly. I fixed the producers so that they sequentially detach them from shared memory and close. I need to fix the print statements, and then it should be finished.
+
+commit eaa6a9262f38b278fa3712a586aee5d99d98f852
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Thu Apr 8 23:32:40 2021 -0500
+
+    I have shared memory working and deallocating correctly. The signals are terminating correctly.
+
+commit 8ce5cb57b1a491c2e7f895308adf1c132f6dc8f0
+Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
+Date:   Thu Apr 8 21:24:32 2021 -0500
+
+    Changed map to shared memory. Also added a ctrl+c interupt handler
+
 commit c6d8ab9c3cb5a9f1b80160d838f4128eaaef3068
 Author: Wilbert Hawley <hawley@hoare7.cs.umsl.edu>
 Date:   Fri Apr 2 03:29:40 2021 -0500
