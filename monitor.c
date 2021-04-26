@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
       time_end = 100;
   char* logfile_name2;
   char options;
+  // parse options
   while (true) {
     options = getopt(argc, argv, ":ho:p:c:t:");
     
@@ -57,6 +58,11 @@ int main(int argc, char** argv) {
       default:
          error_halt(argv[0]);
      }
+  }
+  // my program has a max of 18 producers
+  if(producer_num > 18) {
+    printf("Producer number is now max of 18.");
+    producer_num = 18;
   }
  
   // make sure there are more consumers than producers 
@@ -125,7 +131,7 @@ int main(int argc, char** argv) {
     perror("shmp->semN didn't work");
     exit(1);
   }
-
+  // setting some values for shared memory
   shmp->item = 0;
   shmp->consumer_count = 0;
   shmp->consumer_num = consumer_num;
@@ -134,52 +140,86 @@ int main(int argc, char** argv) {
       proc_num = 0,
       proc_max = 19,
       p = 0,
-      i;
-  for(i = 0; i < producer_num; i++) {
+      i,
+      ip = 0,
+      ic = 0,
+      count = 0;
+
+  while(true) {
     if(proc_num > proc_max) {
       printf("Reached proc_max, waiting\n");
       wait(NULL);
       proc_num--;
     }
-    child = fork();
-    char num[50];
-    sprintf(num, "%d", i);
+
+    count = 0;
+    while(count < 5) {
+      if(ip >= producer_num)
+        break;
+      if(proc_num > proc_max) {
+        printf("Reached proc_max, waiting\n");
+        wait(NULL);
+        proc_num--;
+      }
+      child = fork();
+      char num[50];
+      sprintf(num, "%d", ip);
     
-    if(child == 0)
-      execl("./producer", "./producer", num, NULL);
-    else {
-      shmp->array[p] = child;
-      p++;
-      proc_num++; 
+      if(child == 0)
+        execl("./producer", "./producer", num, NULL);
+      else if(child == -1) {
+        fprintf(stderr, "%s: ", argv[0]);
+        perror("Child failed to fork. Terminate");
+        exit(1);     
+      }
+      else {
+        shmp->array[p] = child;
+        p++;
+        proc_num++; 
+      }
+
+      ip++;
+      count++;
     }
+    count = 0;
+    while(count < 5) {
+      if(ic >= consumer_num)
+        break;
+      if(proc_num > proc_max) {
+        printf("Reached proc_max, waiting\n");
+        wait(NULL);
+        proc_num--;
+      }
+      
+      child = fork();
+      char num2[50];
+      sprintf(num2, "%d", ic);
+
+      if(child == 0)
+        execl("./consumer", "./consumer", num2, NULL);
+      else if(child == -1) {
+        fprintf(stderr, "%s: ", argv[0]);
+        perror("Child failed to fork. Terminate");
+        exit(1);     
+      }
+      else {
+        shmp->array[p] = child;
+        p++;
+        proc_num++;
+      }
+
+      ic++;
+      count++;
+    }
+    if((ic + ip) == (producer_num + consumer_num))
+      break;
   }
 
-  for(i = 0; i < consumer_num; i++) {
-    if(proc_num > proc_max) {
-      printf("Reached proc_max in consumer loop, waiting\n");
-      wait(NULL);
-      proc_num--;
-    }
-    child = fork();
-    char num2[50];
-    sprintf(num2, "%d", i);
-
-    if(child == 0)
-      execl("./consumer", "./consumer", num2, NULL);
-    else {
-      shmp->array[p] = child;
-      p++;
-      proc_num++;
-    }
-  }
-
+  // waiting for any stray processes to finish
   int status;
   while ((child = wait(&status)) > 0) {
     //printf("one child has died\n");
   }
-
-  printf("\nAfter calling both children, item = %d\n", shmp->item);
-  printf("\nshmp->consumer_num = %d, consumer_num = %d\n", shmp->consumer_num, consumer_num); 
   
   // destroy my semaphores
   if (sem_destroy(&shmp->semS) == -1) {
@@ -210,10 +250,7 @@ int main(int argc, char** argv) {
   
   // copy the contents of the logfile to the special named file
   if(logfile_flag) {
-    printf("\n~~~~~%s\n", logfile_name2);
-    printf("\n here1");
     FILE *f1;
-    printf("\n here1");
     f1 = fopen("./logfile", "r");
     if(f1 == NULL)
     {

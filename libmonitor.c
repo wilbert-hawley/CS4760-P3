@@ -71,18 +71,7 @@ void produce(int x) {
       perror("\nsem_wait(S) failed\n");
       exit(1);
     }
-
-    /*if(shmp->item < 4) {
-      shmp->item += 1;
-      time(&now);
-
-      file = fopen(logfile_name,"a");
-      fprintf(file, "Producer %d wrote to the logfile at %s", x, ctime(&now));
-      fclose(file);
-    }
-    else
-      flag = 1;
-    */
+    // leaving producer after last consumer has consumed
     if(shmp->consumer_count >= shmp->consumer_num) {
       //printf("\nleaving producer %d\n", x);
       if(sem_post(&shmp->semS) == -1) {
@@ -95,7 +84,7 @@ void produce(int x) {
         perror("\nsem_post(N) failed\n");
         exit(1);
       }
-      printf("\nProducer %d detaching from shared memory\n", x);
+      printf("Producer %d detaching from shared memory\n", x);
       shmdt(shmp);
       return;
     }
@@ -285,7 +274,7 @@ void processKiller()
     }
     kill(shmp->array[i], SIGTERM);
   }
-  printf("\nkilling shared memory");
+  printf("Destroying shared memory\n");
   shmdt(shmp);
   shmctl(shmid, IPC_RMID, NULL);
   exit(0);
