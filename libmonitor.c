@@ -95,7 +95,7 @@ void produce(int x) {
         perror("\nsem_post(N) failed\n");
         exit(1);
       }
-      printf("\nProducer %d detaching from shared memory", x);
+      printf("\nProducer %d detaching from shared memory\n", x);
       shmdt(shmp);
       return;
     }
@@ -118,11 +118,11 @@ void produce(int x) {
     }
     if (random_flag) {
       time_t t;
-      srand((unsigned) time(&t));
+      srand((unsigned) time(&t)+x);
       int r = rand() % 5;
-      printf("Producer %d about to sleep for %d seconds\n", x, r);
+      printf("Producer %d about to sleep for %d seconds\n", x, r + 1);
       sleep(r + 1);
-      printf("Producer %d woke up after %d seconds\n", x, r);
+      printf("Producer %d woke up after %d seconds\n", x, r+1);
     }
   } 
 }

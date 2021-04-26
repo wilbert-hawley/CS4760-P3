@@ -28,7 +28,6 @@ int main(int argc, char** argv) {
       time_end = 100;
   char* logfile_name2;
   char options;
-  //signal(SIGINT, term_handler);
   while (true) {
     options = getopt(argc, argv, ":ho:p:c:t:");
     
@@ -59,7 +58,8 @@ int main(int argc, char** argv) {
          error_halt(argv[0]);
      }
   }
-  
+ 
+  // make sure there are more consumers than producers 
   if(producer_num >= consumer_num)
   {
     while(producer_num >= consumer_num) {
@@ -67,6 +67,7 @@ int main(int argc, char** argv) {
     }
   }
 
+  // Setting up interupt handlers
   if (setupTimer(time_end) == -1)
   {
     fprintf(stderr, "%s: ", argv[0]);
@@ -106,6 +107,7 @@ int main(int argc, char** argv) {
 
   shmp = (struct shmbuf *)shmat(shmid, NULL, 0);  
 
+  // Create my three semaphores in shared memory
   if(sem_init(&shmp->semS, 1, 1) == -1) {
     fprintf(stderr, "%s: ", argv[0]);
     perror("shmp->semS didn't work");
@@ -175,21 +177,29 @@ int main(int argc, char** argv) {
   while ((child = wait(&status)) > 0) {
     //printf("one child has died\n");
   }
-  /*while(proc_num > producer_num) {
-    wait(NULL);
-    proc_num--;
-  }*/
 
   printf("\nAfter calling both children, item = %d\n", shmp->item);
   printf("\nshmp->consumer_num = %d, consumer_num = %d\n", shmp->consumer_num, consumer_num); 
- /* for(i = 0; i < 100; i++) {
-    printf("killed child\n");
-    if( shmp->array[i] == 0) {
-      break;
-    }
-    kill(shmp->array[i], SIGTERM);
-  }*/  
+  
+  // destroy my semaphores
+  if (sem_destroy(&shmp->semS) == -1) {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("shmp->semS failed to destroy");
+    exit(1);
+  }
 
+  if (sem_destroy(&shmp->semE) == -1) {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("shmp->semE failed to destroy");
+    exit(1);
+  }
+
+  if (sem_destroy(&shmp->semN) == -1) {
+    fprintf(stderr, "%s: ", argv[0]);
+    perror("shmp->semN failed to destroy");
+    exit(1);
+  }
+  // detach from shared memory
   shmdt(shmp);
 
   if (shmctl(shmid, IPC_RMID, NULL) == -1)
@@ -198,6 +208,7 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   
+  // copy the contents of the logfile to the special named file
   if(logfile_flag) {
     printf("\n~~~~~%s\n", logfile_name2);
     printf("\n here1");
